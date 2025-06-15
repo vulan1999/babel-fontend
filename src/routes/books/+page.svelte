@@ -1,43 +1,70 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Table, TableBody, TableBodyRow,TableBodyCell,TableHead, TableHeadCell } from 'flowbite-svelte'
+	import type { Book } from '$lib/types/book';
+	import type { Header } from '$lib/types/table';
+	import AppTable from '$lib/components/AppTable.svelte';
 
-	let books = []
+	let books: Book[] = []
+	interface ApiResponse{
+		code: number;
+		message: string;
+		data: Book[]
+	}
+
+	let res:ApiResponse
+
 	onMount(async() => {
 		try {
 			const response = await fetch('/api/books')
 			if(!response.ok){
 				throw new Error(`HTTP Error`);
 			}
-			let res = await response.json();
-			console.log(res);
+			res = await response.json();
+			if (res.code !== 200) {
+				throw new Error("API error")
+			}
 			books = res.data;
 		} catch (err) {
 			console.log("Error");
 			console.log(err)
 		} finally {
-			console.log("OK")
+			console.log("OK");
+			console.log(books);
 		}
 	})
+
+	let header: Header[] = [
+		{
+			id: 1,
+			name: 'ID',
+			key: 'id'
+		},
+		{
+			id: 2,
+			name: 'Title',
+			key: 'title'
+		},
+		{
+			id: 3,
+			name: 'Author',
+			key: 'author.author_name'
+		},
+		{
+			id: 4,
+			name: 'Original Title',
+			key: 'original_book.original_book_title'
+		},
+		{
+			id: 5,
+			name: 'Language',
+			key: 'language.language_description'
+		},
+	]
 </script>
 
 <div class="p-4">
-	<Table>
-		<TableHead>
-			<TableHeadCell>Title</TableHeadCell>
-			<TableHeadCell>Author</TableHeadCell>
-			<TableHeadCell>Original Title</TableHeadCell>
-			<TableHeadCell>Language</TableHeadCell>
-		</TableHead>
-		<TableBody>
-			{#each books as book (book.id)}
-				<TableBodyRow>
-					<TableBodyCell>{book.title}</TableBodyCell>
-					<TableBodyCell>{book.author.author_name}</TableBodyCell>
-					<TableBodyCell>{book.original_book.original_book_title}</TableBodyCell>
-					<TableBodyCell>{book.language.language_description}</TableBodyCell>
-				</TableBodyRow>
-			{/each}
-		</TableBody>
-	</Table>
+	<AppTable
+		headers={header}
+		data={books}
+	/>
 </div>
